@@ -337,6 +337,7 @@ app.get('/API/Get/RectCandidats/:_id',function(req,res) {
                         _next1(currentIndex1 + 1)
                     });
                 };
+
                 // First call
                 _next1(0);
             });
