@@ -10,6 +10,7 @@ var CandidatSchema=mongoose.Schema({
     email: String,
     passwd: String,
     dateNaissance: Date,
+    summary:String,
     numtel: Number,
     adress: String,
     url_img: String,
@@ -85,6 +86,7 @@ module.exports.updateCandidat=function(id,Candidat,option,callback){
         language: Candidat.language,
         projet: Candidat.projet,
         education: Candidat.education,
+        summary:Candidat.summary,
         skills: Candidat.skills,
         experience_professionel: Candidat.experience_professionel,
         Myoffers:Candidat.Myoffers
@@ -132,7 +134,6 @@ module.exports.dropCandidatOffer=function(id,offer,option,callback){
      var i=0;
     candidat.findById(id,function(err,cand){
         if(err)throw err;
-
         Array.prototype.deleteObjValueAfterFind = function(key, value) {
             return this.filter(function(item) {
              i=i+1;
@@ -143,12 +144,10 @@ module.exports.dropCandidatOffer=function(id,offer,option,callback){
             });
         }
         cand.Myoffers.deleteObjValueAfterFind("_id",offer._id);
-
         candidat.findOneAndUpdate({"_id":id},cand,option,callback);
     })
 }
 //get all My Offers
-
 module.exports.getCandidatOffers=function (id,callback) {
             candidat.findById(id,callback);
     }

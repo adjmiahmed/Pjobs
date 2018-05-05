@@ -32,7 +32,7 @@ var OffreSchema=mongoose.Schema({
         {
             nom_skill:String,
             niveau:String
-        },
+        }
     ],
     nom_entreprise: String
 
@@ -43,12 +43,8 @@ module.exports.getOffers=function (callback,limet) {
     Offer.find(callback).limit(limet).pretty;
 }
 module.exports.findOfferById=function (ids,callback) {
-    a = Offer.findById({_id: ids}, callback)
+     Offer.findById({_id: ids}, callback)
 }
-
-
-
-
 //Add offer
 module.exports.AddOffer=function(offre,callback){
     Offer.create(offre,callback);
@@ -82,6 +78,33 @@ module.exports.getOffersByRectID=function (rect_id,callback) {
     //var query={email:email}
     Offer.find({"id_recruteur":rect_id},callback);
 }
+
+//get offer by skills
+module.exports.getOffersBySkills=function (candidateskils,callback) {
+    Offer.find({skills:candidateskils},callback);
+}
+
+//get offer by background
+module.exports.getOffersByBack=function (background,callback) {
+    Offer.find({"background":background},callback);
+}
+//getoffer By entreprise
+module.exports.getOffersByEntreprise=function (entreprisename,callback) {
+    Offer.find({"nom_entreprise":entreprisename},callback);
+}
+//getoffer by profile
+module.exports.getOffersByProfile=function (candidateskils,candidateback,callback) {
+    Offer.find({$or:[{skills:candidateskils },{background:candidateback}]},callback);
+}
+
+
+
+
+
+
+
+
+
 //add Candidat to offer
 module.exports.addCandidatToOffer=function(id,cand,option,callback){
     Offer.findById(id,function(err,offre){

@@ -112,6 +112,17 @@ app.get('/API/Get/AllCandidats',function (req,res) {
         res.json(MyCandidat);
     });
 });
+//get candidate by email
+
+app.get('/API/Get/CandbyEmail/:eemail',function(req,res){
+    var emmail=req.params.eemail
+   CandiatModule.getCandByemail(emmail,function (err,result) {
+        if(err){console.log("ereur",err);}
+        console.log("this is result"+result)
+        res.json(result);});
+});
+
+
 //add Candidat
 app.post('/API/ADD/Candidat',function(req,res){
     var test=req.body;
@@ -209,6 +220,45 @@ app.get('/API/Get/AllOffers',function (req,res) {
         res.json(MyCandidat);
     });
 });
+//find offers by profile
+
+app.post('/API/Get/offersByProfile',function (req,res) {
+var a=[]
+    var body=req.body
+    OfferModule.getOffers(function (err ,offers) {
+        if (err) {
+            throw err;
+        }
+        var _next = function (currentIndex) {
+            if (currentIndex >= offers.length) {
+                res.json(a);
+                return;
+            }
+
+            var backk=offers[currentIndex].background
+            var skillsname=offers[currentIndex].skills
+
+            if(backk===body.backgroundSkill.toString())
+            {
+                a.push(offers[currentIndex])
+            }else
+            {console.log("body"+body.skillnameCand[i])
+                for(var i=0;i<body.skillnameCand.length;i++)
+                if(skillsname[0].nom_skill===body.skillnameCand[i])
+            {
+                a.push(offers[currentIndex])}
+
+            }
+            _next(currentIndex + 1)
+
+        };
+        // First call
+        _next(0);
+    });
+});
+
+
+
 //add Offer
 app.post('/API/ADD/Offer',function(req,res){
     var test=req.body;
@@ -274,7 +324,6 @@ app.get('/API/Get/offer/:_id',function(req,res){
 app.get('/API/Get/offersCand/:_id',function(req,res) {
     var id = req.params._id;
     var a = [];
-
     OfferModule.findOfferById(id, function (err, result) {
         if (err) {
             console.log("ereur", err);
@@ -306,6 +355,18 @@ app.get('/API/Get/AllRecruteur',function (req,res) {
         res.json(MyCandidat);
     });
 });
+
+//get recurter by email
+
+app.get('/API/Get/RectbyEmail/:eemail',function(req,res){
+    var emmail=req.params.eemail
+    RecuteurModule.getRectByEmail(emmail,function (err,result) {
+        if(err){console.log("ereur",err);}
+        console.log("this is result"+result)
+        res.json(result);});
+});
+
+
 //Get Recruter  candidats
 app.get('/API/Get/RectCandidats/:_id',function(req,res) {
     var id = req.params._id;
