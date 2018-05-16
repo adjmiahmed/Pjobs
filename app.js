@@ -35,7 +35,7 @@ admin.initializeApp({
 //find all user
 app.get('/API/Get/AllUsers',function (req,res) {
     //  console.log("no error"+"")
-var idToken=req.header("Authorisation")
+var idToken=req.header("Authorization")
     admin.auth().verifyIdToken(idToken)
         .then(function(decodedToken) {
             var uid = decodedToken.uid;
