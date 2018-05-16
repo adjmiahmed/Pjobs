@@ -19,16 +19,30 @@ app.use(bodyParser.json());
 mongoose.connect('mongodb://ahmed:ahmed@ds155132.mlab.com:55132/pjobs');
 var db=mongoose.connection;
 
-//setting up api
-app.get('/API/',function (req,res) {
-    console.log("no error"+"")
-    res.send('API is hear');
-
-});
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: 'https://pjobsDb.firebaseio.com'
 });
+//setting up api
+app.get('/API/',function (req,res) {
+
+
+
+    var idToken=req.header("Authorization")
+    admin.auth().verifyIdToken(idToken)
+        .then(function(decodedToken) {
+            var uid = decodedToken.uid;
+            console.log("uid"+uid)
+            res.send(uid)
+            // ...
+        }).catch(function(error) {
+        res.send("my error"+error)
+    });
+
+
+});
+
+
 
 
 
@@ -61,6 +75,10 @@ var idToken=req.header("Authorization")
 app.get('/API/Get/User/:_id',function (req,res) {
     //  console.log("no error"+"")
     var id=req.params._id;
+    var idToken=req.header("Authorization")
+    admin.auth().verifyIdToken(idToken)
+        .then(function(decodedToken) {
+
     UserModule.getusersById(id,function (err ,Myuser) {
         if (err) {
 //console.log(err+"")
@@ -69,6 +87,10 @@ app.get('/API/Get/User/:_id',function (req,res) {
         //      console.log("no error"+"")
         res.json(Myuser);
     });
+        }).catch(function(error) {
+        res.json("401 Unauthorised user")
+    });
+
 });
 //add user
 app.post('/API/ADD/USER',function(req,res){
