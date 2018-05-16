@@ -1,10 +1,10 @@
 var express = require('express');
 var path = require('path');
-var favicon = require('serve-favicon');
+//var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
-
+var admin = require('firebase-admin');
 var index = require('./routes/index');
 var users = require('./routes/users');
 var UserModule=require('./Module/User');
@@ -12,6 +12,7 @@ var CandiatModule=require('./Module/Candidat');
 var RecuteurModule=require('./Module/Recruter');
 var OfferModule=require('./Module/offre');
 var mongoose=require('mongoose');
+var serviceAccount = require('./pjobsdb-firebase-adminsdk.json');
 var app = express();
 app.use(bodyParser.json());
 //mongo connection
@@ -24,17 +25,37 @@ app.get('/API/',function (req,res) {
     res.send('API is hear');
 
 });
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: 'https://pjobsDb.firebaseio.com'
+});
+
+
+
 //find all user
 app.get('/API/Get/AllUsers',function (req,res) {
     //  console.log("no error"+"")
-    UserModule.getusers(function (err ,Myuser) {
-        if (err) {
-        //console.log(err+"")
-            throw err;
-        }
-        //      console.log("no error"+"")
-        res.json(Myuser);
+var idToken=req.header("Authorisation")
+    admin.auth().verifyIdToken(idToken)
+        .then(function(decodedToken) {
+            var uid = decodedToken.uid;
+            console.log("uid"+uid)
+
+            UserModule.getusers(function (err ,Myuser) {
+                if (err) {
+                    //console.log(err+"")
+                    throw err;
+                }
+                //      console.log("no error"+"")
+
+            });
+            res.json(Myuser);
+
+            // ...
+        }).catch(function(error) {
+      res.json("401 Unauthorised user")
     });
+
 });
 //find user by id
 app.get('/API/Get/User/:_id',function (req,res) {
