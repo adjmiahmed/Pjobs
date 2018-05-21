@@ -89,8 +89,7 @@ module.exports.updateCandidat=function(id,Candidat,option,callback){
         summary:Candidat.summary,
         skills: Candidat.skills,
         experience_professionel: Candidat.experience_professionel,
-        Myoffers:Candidat.Myoffers
-
+       
     }
     candidat.findOneAndUpdate(query,update,option,callback);
 }
