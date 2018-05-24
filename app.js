@@ -40,7 +40,7 @@ app.get('/API/',function (req,res) {
 
 });
 
-app.get('API/Token'),function(req,res)
+app.get('/API/Token'),function(req,res)
 {
 	var token=req.header("Token")
 	var payload={
