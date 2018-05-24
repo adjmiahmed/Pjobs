@@ -26,8 +26,6 @@ admin.initializeApp({
 //setting up api
 app.get('/API/',function (req,res) {
 
-
-
     var idToken=req.header("Authorization")
     admin.auth().verifyIdToken(idToken)
         .then(function(decodedToken) {
@@ -42,7 +40,28 @@ app.get('/API/',function (req,res) {
 
 });
 
-
+app.get('API/Token'),function(req,res)
+{
+	var token=req.header("Token")
+	var payload={
+		"data":{
+			"key":"hello its ahmed"
+		}
+	};
+	var option={
+		"priority":"high",
+		"timeToLive":"60*60*24"
+	};
+	admin.messaging().sendToDevice(token,payload,option).then(function(result){
+		res.send("result"+result)
+		console.log("result"+result)
+	})
+	.catch(function(error){
+		res.send("error"+error)
+		console.log("error"+error)
+	})
+	
+}
 
 
 
