@@ -50,7 +50,7 @@ app.get('/API/Token',function(req,res)
 	};
 	var option={
 		"priority":"high",
-		"timeToLive":"60*60*24"
+		"timeToLive":60*60*24
 	};
 	admin.messaging().sendToDevice(token,payload,option).then(function(result){
 		res.send("result"+result)
