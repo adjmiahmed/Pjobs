@@ -382,6 +382,16 @@ app.get('/API/Get/offer/:_id',function(req,res){
         res.json(result);});
 
 });
+//find offer by rect id
+app.get('/API/Get/offerByRectID/:_id',function(req,res){
+    var id=req.params._id
+    OfferModule.getOffersByRectID(id,function (err,result) {
+        if(err){console.log("ereur",err);}
+        //console.log("this is result"+result)
+        res.json(result);});
+
+});
+
 //find offer candidats
 app.get('/API/Get/offersCand/:_id',function(req,res) {
     var id = req.params._id;
