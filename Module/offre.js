@@ -65,9 +65,6 @@ module.exports.updateOffer=function(id,offer,option,callback){
         background: offer.background,
         language:offer.language,
         niveau_etude: offer.niveau_etude,
-        status: offer.status,
-        id_recruteur: offer.id_recruteur,
-        candidates: offer.candidates,
         skills:offer.skills,
         nom_entreprise: offer.nom_entreprise
     }
