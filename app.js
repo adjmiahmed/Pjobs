@@ -7,74 +7,203 @@ var bodyParser = require('body-parser');
 var admin = require('firebase-admin');
 var index = require('./routes/index');
 var users = require('./routes/users');
-var UserModule=require('./Module/User');
-var CandiatModule=require('./Module/Candidat');
-var RecuteurModule=require('./Module/Recruter');
-var OfferModule=require('./Module/offre');
-var mongoose=require('mongoose');
+var UserModule = require('./Module/User');
+var CandiatModule = require('./Module/Candidat');
+var RecuteurModule = require('./Module/Recruter');
+var OfferModule = require('./Module/offre');
+var NotifModule=require('./Module/Notification')
+var mongoose = require('mongoose');
 var serviceAccount = require('./pjobsdb-firebase-adminsdk.json');
 var app = express();
 app.use(bodyParser.json());
 //mongo connection
 mongoose.connect('mongodb://ahmed:ahmed@ds155132.mlab.com:55132/pjobs');
-var db=mongoose.connection;
+var db = mongoose.connection;
 
 admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
     databaseURL: 'https://pjobsDb.firebaseio.com'
 });
-//setting up api
-app.get('/API/',function (req,res) {
 
-    var idToken=req.header("Authorization")
+//messanging function
+
+var messanging = function (token, payload, option) {
+
+    admin.messaging().sendToDevice(token, payload, option).then(function (result) {
+        res.send("result" + result)
+        console.log("result" + result)
+    })
+        .catch(function (error) {
+            res.send("error" + error)
+            console.log("error" + error)
+        })
+
+
+}
+
+//verify email
+
+var verifEmail=function(uid){
+    admin.auth().getUser(uid)
+        .then(function(userRecord) {
+            // See the UserRecord reference doc for the contents of userRecord.
+            console.log("Successfully fetched user data:", userRecord.toJSON());
+            var user=userRecord.toJSON()
+            console.log("Successfully fetched user email:",  user.email);
+            return user.email
+        })
+        .catch(function(error) {
+            console.log("Error fetching user data:", error);
+            return null
+        });
+
+}
+
+
+//security function
+
+var Authorized = function (token) {
+    admin.auth().verifyIdToken(token)
+        .then(function (decodedToken) {
+           var email= verifEmail(decodedToken.uid)
+            console.log("email is ",email)
+            return email
+        })
+        .catch(function (error) {
+            console.log("email is ",error)
+
+        })
+}
+
+
+//setting up api
+app.get('/API/', function (req, res) {
+
+    var idToken = req.header("Authorization")
+    var identity = req.header("email")
     admin.auth().verifyIdToken(idToken)
-        .then(function(decodedToken) {
+        .then(function (decodedToken) {
             var uid = decodedToken.uid;
-            console.log("uid"+uid)
-            res.send(uid)
-            // ...
-        }).catch(function(error) {
-        res.send("my error"+error)
+            console.log("uid" + uid)
+            var email = decodedToken.email
+            if (identity != email) {
+
+                res.send("Not Authorized")
+            } else
+                res.send(email)
+        })
+        // ...
+        .catch(function (error) {
+            res.send("my error" + error)
+        })
+})
+
+
+
+
+/*
+app.get('/API/Token', function (req, res) {
+    var token = req.header("Token")
+    var topic = 'highScores';
+    var message = {
+        data: {
+            score: '850',
+            time: '2:45'
+        },
+        topic: topic
+    };
+
+    admin.messaging().send(message)
+        .then(function(response) {
+        // Response is a message ID string.
+        console.log('Successfully sent message:', response);
+})
+    .catch(function(error){
+        console.log('Error sending message:', error);
+});
+})
+*/
+
+
+app.post('/API/SendNotif', function (req, res) {
+    var token = req.header("Token")
+var notif=req.body
+    /*
+    var payload = {
+        "notification": {
+            "title": "Matched",
+            "body": "Some one liked your Profile"
+        }
+    };
+    var option = {
+        "priority": "high",
+        "timeToLive": 60 * 60 * 24
+    };*/
+    admin.messaging().sendToDevice(notif.deviceID, notif.payload, notif.Option).then(function (result) {
+        res.send("notification send")
+        console.log("notification send")
+    })
+        .catch(function (error) {
+            res.send("error" + error)
+            console.log("error" + error)
+        })
+
+});
+
+
+//add notif
+app.post('/API/ADD/Notif', function (req, res) {
+    var test = req.body;
+    console.log("test: %j", test);
+    NotifModule.addnotif(test, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
+});
+
+//update notif
+app.put('/API/UpdateNotif/:_id', function (req, res) {
+    var id = req.params._id
+    var test = req.body;
+    console.log("test: %j", test);
+    NotifModule.updateNotif(id, test, {}, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
     });
 
-
 });
 
-app.get('/API/Token',function(req,res)
-{
-	var token=req.header("Token")
-	var payload={
-		"data":{
-			"key":"hello its ahmed"
-		}
-	};
-	var option={
-		"priority":"high",
-		"timeToLive":60*60*24
-	};
-	admin.messaging().sendToDevice(token,payload,option).then(function(result){
-		res.send("result"+result)
-		console.log("result"+result)
-	})
-	.catch(function(error){
-		res.send("error"+error)
-		console.log("error"+error)
-	})
-	
+//get notif by mail
+app.get('/API/Get/Notif/:userId', function (req, res) {
+    var userId = req.params.userId
+    NotifModule.getnotifByuserid(userId, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 });
+
 
 
 
 //find all user
-app.get('/API/Get/AllUsers',function (req,res) {
+app.get('/API/Get/AllUsers', function (req, res) {
     //  console.log("no error"+"")
-var idToken=req.header("Authorization")
+    var idToken = req.header("Authorization")
     admin.auth().verifyIdToken(idToken)
-        .then(function(decodedToken) {
+        .then(function (decodedToken) {
             var uid = decodedToken.uid;
-            console.log("uid"+uid)
+            console.log("uid" + uid)
 
-            UserModule.getusers(function (err ,Myuser) {
+            UserModule.getusers(function (err, Myuser) {
                 if (err) {
                     //console.log(err+"")
                     throw err;
@@ -85,87 +214,102 @@ var idToken=req.header("Authorization")
             res.json(Myuser);
 
             // ...
-        }).catch(function(error) {
-      res.json("401 Unauthorised user")
+        }).catch(function (error) {
+        res.json("401 Unauthorised user")
     });
 
 });
 //find user by id
-app.get('/API/Get/User/:_id',function (req,res) {
+app.get('/API/Get/User/:_id', function (req, res) {
     //  console.log("no error"+"")
-    var id=req.params._id;
-    var idToken=req.header("Authorization")
+    var id = req.params._id;
+    var idToken = req.header("Authorization")
     admin.auth().verifyIdToken(idToken)
-        .then(function(decodedToken) {
+        .then(function (decodedToken) {
 
-    UserModule.getusersById(id,function (err ,Myuser) {
-        if (err) {
+            UserModule.getusersById(id, function (err, Myuser) {
+                if (err) {
 //console.log(err+"")
-            throw err;
-        }
-        //      console.log("no error"+"")
-        res.json(Myuser);
-    });
-        }).catch(function(error) {
+                    throw err;
+                }
+                //      console.log("no error"+"")
+                res.json(Myuser);
+            });
+        }).catch(function (error) {
         res.json("401 Unauthorised user")
     });
 
 });
 //add user
-app.post('/API/ADD/USER',function(req,res){
-    var test=req.body;
+app.post('/API/ADD/USER', function (req, res) {
+    var test = req.body;
     console.log("test: %j", test);
-    UserModule.addUser(test,function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+    UserModule.addUser(test, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 
 });
 //update user
-app.put('/API/Update/USER/:_id',function(req,res){
-    var id=req.params._id
-    var test=req.body;
+app.put('/API/Update/USER/:_id', function (req, res) {
+    var id = req.params._id
+    var test = req.body;
     console.log("test: %j", test);
-    UserModule.updateUser(id,test,{},function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+    UserModule.updateUser(id, test, {}, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 
 });
 
 //delete user
-app.delete('/API/Delete/USER/:_id',function(req,res){
-    var id=req.params._id
-    UserModule.DeleteUser(id,function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+app.delete('/API/Delete/USER/:_id', function (req, res) {
+    var id = req.params._id
+    UserModule.DeleteUser(id, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 
 });
 //get user by username
-app.get('/API/Get/login/:name',function(req,res){
-    var username=req.params.name
+app.get('/API/Get/login/:name', function (req, res) {
+    var username = req.params.name
     console.log("username", username);
-    UserModule.getUserByusername(username,function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+    UserModule.getUserByusername(username, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 
 });
 
 //get user by email
-app.get('/API/Get/loginEmail/:eemail',function(req,res){
-    var emmail=req.params.eemail
-    UserModule.getUserByEmail(emmail,function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+app.get('/API/Get/loginEmail/:eemail', function (req, res) {
+    var emmail = req.params.eemail
+    UserModule.getUserByEmail(emmail, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 
 });
 //find all candidat
-app.get('/API/Get/AllCandidats',function (req,res) {
+app.get('/API/Get/AllCandidats', function (req, res) {
     //  console.log("no error"+"")
-    CandiatModule.getCandidats(function (err ,MyCandidat) {
+    CandiatModule.getCandidats(function (err, MyCandidat) {
         if (err) {
 //console.log(err+"")
             throw err;
@@ -176,69 +320,87 @@ app.get('/API/Get/AllCandidats',function (req,res) {
 });
 //get candidate by email
 
-app.get('/API/Get/CandbyEmail/:eemail',function(req,res){
-    var emmail=req.params.eemail
-   CandiatModule.getCandByemail(emmail,function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+app.get('/API/Get/CandbyEmail/:eemail', function (req, res) {
+    var emmail = req.params.eemail
+    CandiatModule.getCandByemail(emmail, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 });
 
 
 //add Candidat
-app.post('/API/ADD/Candidat',function(req,res){
-    var test=req.body;
+app.post('/API/ADD/Candidat', function (req, res) {
+    var test = req.body;
     console.log("test: %j", test);
-    CandiatModule.AddCandidat(test,function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+    CandiatModule.AddCandidat(test, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 
 });
 //update Candidat
-app.put('/API/Update/Candidat/:_id',function(req,res){
-    var id=req.params._id
-    var test=req.body;
+app.put('/API/Update/Candidat/:_id', function (req, res) {
+    var id = req.params._id
+    var test = req.body;
     console.log("body: %j", test);
-    CandiatModule.updateCandidat(id,test,{},function (err,result) {
-        if(err){console.log("ereur",err);}
+    CandiatModule.updateCandidat(id, test, {}, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
         //console.log("this is result"+result)
-        res.json(result);});
+        res.json(result);
+    });
 
 });
 //delete Candidat
-app.delete('/API/Delete/Candidat/:_id',function(req,res){
-    var id=req.params._id
-    CandiatModule.DeleteCandidat(id,function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+app.delete('/API/Delete/Candidat/:_id', function (req, res) {
+    var id = req.params._id
+    CandiatModule.DeleteCandidat(id, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 
 });
 //add offer to candidat
-app.put('/API/AddOfferToCandiat/:_id',function(req,res){
-    var id=req.params._id
-    var offree=req.body;
+app.put('/API/AddOfferToCandiat/:_id', function (req, res) {
+    var id = req.params._id
+    var offree = req.body;
     console.log("test: %j", offree);
-    CandiatModule.addOfferToCandidat(id,offree,{},function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+    CandiatModule.addOfferToCandidat(id, offree, {}, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 
 });
 //change candidat offer statu
-app.put('/API/ChangeCandOfferStatus/:_id',function(req,res){
-    var id=req.params._id
-    var offree=req.body;
+app.put('/API/ChangeCandOfferStatus/:_id', function (req, res) {
+    var id = req.params._id
+    var offree = req.body;
     console.log("test: %j", offree);
-    CandiatModule.changeStatus(id,offree,{},function (err,result) {
-        if(err){console.log("ereur",err);}
-    //    console.log("this is result"+result)
-        res.json(result);});
+    CandiatModule.changeStatus(id, offree, {}, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        //    console.log("this is result"+result)
+        res.json(result);
+    });
 
 });
 //Get Candidat offers
-app.get('/API/Get/CandidatOffers/:_id',function(req,res) {
+app.get('/API/Get/CandidatOffers/:_id', function (req, res) {
     var id = req.params._id;
     var a = [];
     CandiatModule.getCandidatOffers(id, function (err, result) {
@@ -248,32 +410,35 @@ app.get('/API/Get/CandidatOffers/:_id',function(req,res) {
         var _next = function (currentIndex) {
             if (currentIndex >= result.Myoffers.length) {
                 res.json(a);
-            return;
+                return;
             }
-            OfferModule.findOfferById(result.Myoffers[currentIndex]._id,function (err,offree) {
+            OfferModule.findOfferById(result.Myoffers[currentIndex]._id, function (err, offree) {
                 a.push(offree);
                 _next(currentIndex + 1)
             });
         };
         // First call
         _next(0);
-            });
+    });
 });
 //supprimer candidat specific offer
-app.put('/API/DropCandOffer/:_id',function(req,res){
-    var id=req.params._id
-    var offree=req.body;
+app.put('/API/DropCandOffer/:_id', function (req, res) {
+    var id = req.params._id
+    var offree = req.body;
     console.log("test: %j", offree);
-    CandiatModule.dropCandidatOffer(id,offree,{},function (err,result) {
-        if(err){console.log("ereur",err);}
+    CandiatModule.dropCandidatOffer(id, offree, {}, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
 //        console.log("this is result"+result)
-        res.json(result);});
+        res.json(result);
+    });
 
 });
 //find all Offers
-app.get('/API/Get/AllOffers',function (req,res) {
+app.get('/API/Get/AllOffers', function (req, res) {
     //  console.log("no error"+"")
-    OfferModule.getOffers(function (err ,MyCandidat) {
+    OfferModule.getOffers(function (err, MyCandidat) {
         if (err) {
 //console.log(err+"")
             throw err;
@@ -284,10 +449,10 @@ app.get('/API/Get/AllOffers',function (req,res) {
 });
 //find offers by profile
 
-app.post('/API/Get/offersByProfile',function (req,res) {
-var a=[]
-    var body=req.body
-    OfferModule.getOffers(function (err ,offers) {
+app.post('/API/Get/offersByProfile', function (req, res) {
+    var a = []
+    var body = req.body
+    OfferModule.getOffers(function (err, offers) {
         if (err) {
             throw err;
         }
@@ -297,18 +462,17 @@ var a=[]
                 return;
             }
 
-            var backk=offers[currentIndex].background
-            var skillsname=offers[currentIndex].skills
+            var backk = offers[currentIndex].background
+            var skillsname = offers[currentIndex].skills
 
-            if(backk===body.backgroundSkill.toString())
-            {
+            if (backk === body.backgroundSkill.toString()) {
                 a.push(offers[currentIndex])
-            }else
-            {console.log("body"+body.skillnameCand[i])
-                for(var i=0;i<body.skillnameCand.length;i++)
-                if(skillsname[0].nom_skill===body.skillnameCand[i])
-            {
-                a.push(offers[currentIndex])}
+            } else {
+                console.log("body" + body.skillnameCand[i])
+                for (var i = 0; i < body.skillnameCand.length; i++)
+                    if (skillsname[0].nom_skill === body.skillnameCand[i]) {
+                        a.push(offers[currentIndex])
+                    }
 
             }
             _next(currentIndex + 1)
@@ -320,93 +484,113 @@ var a=[]
 });
 
 
-
 //add Offer
-app.post('/API/ADD/Offer',function(req,res){
-    var test=req.body;
+app.post('/API/ADD/Offer', function (req, res) {
+    var test = req.body;
     console.log("test: %j", test);
-    OfferModule.AddOffer(test,function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+    OfferModule.AddOffer(test, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 
 });
 //update offers
-app.put('/API/Update/offer/:_id',function(req,res){
-    var id=req.params._id
-    var test=req.body;
+app.put('/API/Update/offer/:_id', function (req, res) {
+    var id = req.params._id
+    var test = req.body;
     console.log("test: %j", test);
-    OfferModule.updateOffer(id,test,{},function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+    OfferModule.updateOffer(id, test, {}, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 
 });
 //delete Offer
-app.delete('/API/Delete/Offer/:_id',function(req,res){
-    var id=req.params._id
-    OfferModule.DeleteOffer(id,function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+app.delete('/API/Delete/Offer/:_id', function (req, res) {
+    var id = req.params._id
+    OfferModule.DeleteOffer(id, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 
 });
 //add candidat to Offer
-app.put('/API/AddCandToOffre/:_id',function(req,res){
-    var id=req.params._id
-    var cand=req.body;
+app.put('/API/AddCandToOffre/:_id', function (req, res) {
+    var id = req.params._id
+    var cand = req.body;
     console.log("test: %j", cand);
-    OfferModule.addCandidatToOffer(id,cand,{},function (err,result) {
-        if(err){console.log("ereur",err);}
+    OfferModule.addCandidatToOffer(id, cand, {}, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
         //console.log("this is result"+result)
-        res.json(result);});
+        res.json(result);
+    });
 
 });
 //change offer candidat  etat
-app.put('/API/ChangeOfferCandetat/:_id',function(req,res){
-    var id=req.params._id
-    var cand=req.body;
+app.put('/API/ChangeOfferCandetat/:_id', function (req, res) {
+    var id = req.params._id
+    var cand = req.body;
     console.log("test: %j", cand);
-    OfferModule.changeCandStatus(id,cand,{},function (err,result) {
-        if(err){console.log("ereur",err);}
+    OfferModule.changeCandStatus(id, cand, {}, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
         //    console.log("this is result"+result)
-        res.json(result);});
+        res.json(result);
+    });
 
 });
 //find offer by id
-app.get('/API/Get/offer/:_id',function(req,res){
-    var id=req.params._id
-    OfferModule.findOfferById(id,function (err,result) {
-        if(err){console.log("ereur",err);}
+app.get('/API/Get/offer/:_id', function (req, res) {
+    var id = req.params._id
+    OfferModule.findOfferById(id, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
         //console.log("this is result"+result)
-        res.json(result);});
+        res.json(result);
+    });
 
 });
 //find offer by rect id
-app.get('/API/Get/offerByRectID/:_id',function(req,res){
-    var id=req.params._id
-    OfferModule.getOffersByRectID(id,function (err,result) {
-        if(err){console.log("ereur",err);}
+app.get('/API/Get/offerByRectID/:_id', function (req, res) {
+    var id = req.params._id
+    OfferModule.getOffersByRectID(id, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
         //console.log("this is result"+result)
-        res.json(result);});
+        res.json(result);
+    });
 
 });
 
 //find offer candidats
-app.get('/API/Get/offersCand/:_id',function(req,res) {
+app.get('/API/Get/offersCand/:_id', function (req, res) {
     var id = req.params._id;
     var a = [];
     OfferModule.findOfferById(id, function (err, result) {
         if (err) {
             console.log("ereur", err);
         }
-        console.log("result.candidats=",result.candidates);
+        console.log("result.candidats=", result.candidates);
         var _next = function (currentIndex) {
             if (currentIndex >= result.candidates.length) {
                 res.json(a);
                 return;
             }
-           CandiatModule.getCandidatOffers(result.candidates[currentIndex]._id,function (err,cand) {
+            CandiatModule.getCandidatOffers(result.candidates[currentIndex]._id, function (err, cand) {
                 a.push(cand);
                 _next(currentIndex + 1)
             });
@@ -414,11 +598,11 @@ app.get('/API/Get/offersCand/:_id',function(req,res) {
         // First call
         _next(0);
     });
-    });
+});
 //find all Recruteur
-app.get('/API/Get/AllRecruteur',function (req,res) {
+app.get('/API/Get/AllRecruteur', function (req, res) {
     //  console.log("no error"+"")
-    RecuteurModule.getRecruters(function (err ,MyCandidat) {
+    RecuteurModule.getRecruters(function (err, MyCandidat) {
         if (err) {
 //console.log(err+"")
             throw err;
@@ -430,25 +614,29 @@ app.get('/API/Get/AllRecruteur',function (req,res) {
 
 //get recurter by email
 
-app.get('/API/Get/RectbyEmail/:eemail',function(req,res){
-    var emmail=req.params.eemail
-    RecuteurModule.getRectByEmail(emmail,function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+app.get('/API/Get/RectbyEmail/:eemail', function (req, res) {
+    var emmail = req.params.eemail
+    RecuteurModule.getRectByEmail(emmail, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 });
 
 
 //Get Recruter  candidats
-app.get('/API/Get/RectCandidats/:_id',function(req,res) {
+app.get('/API/Get/RectCandidats/:_id', function (req, res) {
     var id = req.params._id;
     var a = [];
-    var _next1=function(){};
+    var _next1 = function () {
+    };
     RecuteurModule.getRecruterById(id, function (err, result) {
         if (err) {
             console.log("ereur", err);
         }
-        console.log("ereur",result.offers);
+        console.log("ereur", result.offers);
         var _next = function (currentIndex) {
             if (currentIndex >= result.offers.length) {
                 res.json(a);
@@ -459,13 +647,13 @@ app.get('/API/Get/RectCandidats/:_id',function(req,res) {
                 if (err) {
                     console.log("ereur", err);
                 }
-                console.log("result.candidats=",offer.candidates);
-                 _next1 = function (currentIndex1) {
+                console.log("result.candidats=", offer.candidates);
+                _next1 = function (currentIndex1) {
                     if (currentIndex1 >= offer.candidates.length) {
-                        _next(currentIndex+1)
-                        return ;
+                        _next(currentIndex + 1)
+                        return;
                     }
-                    CandiatModule.getCandidatOffers(offer.candidates[currentIndex1]._id,function (err,cand) {
+                    CandiatModule.getCandidatOffers(offer.candidates[currentIndex1]._id, function (err, cand) {
                         a.push(cand);
                         _next1(currentIndex1 + 1)
                     });
@@ -480,7 +668,7 @@ app.get('/API/Get/RectCandidats/:_id',function(req,res) {
     });
 });
 //Get Recruter  offers
-app.get('/API/Get/RectOffers/:_id',function(req,res) {
+app.get('/API/Get/RectOffers/:_id', function (req, res) {
     var id = req.params._id;
     var a = [];
     RecuteurModule.getrectId(id, function (err, result) {
@@ -492,7 +680,7 @@ app.get('/API/Get/RectOffers/:_id',function(req,res) {
                 res.json(a);
                 return;
             }
-            OfferModule.findOfferById(result.offers[currentIndex]._id,function (err,offree) {
+            OfferModule.findOfferById(result.offers[currentIndex]._id, function (err, offree) {
                 a.push(offree);
                 _next(currentIndex + 1)
             });
@@ -502,42 +690,51 @@ app.get('/API/Get/RectOffers/:_id',function(req,res) {
     });
 });
 //add Recruter
-app.post('/API/ADD/Recruter',function(req,res){
-    var test=req.body;
+app.post('/API/ADD/Recruter', function (req, res) {
+    var test = req.body;
     console.log("test: %j", test);
-    RecuteurModule.AddRecruteur(test,function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+    RecuteurModule.AddRecruteur(test, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 
 });
 //update recruter
-app.put('/API/Update/Recruter/:_id',function(req,res){
-    var id=req.params._id
-    var test=req.body;
+app.put('/API/Update/Recruter/:_id', function (req, res) {
+    var id = req.params._id
+    var test = req.body;
     console.log("test: %j", test);
-    RecuteurModule.updateRecruteur(id,test,{},function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+    RecuteurModule.updateRecruteur(id, test, {}, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 
 });
 //add offer to recruter
-app.put('/API/AddOfferToRecruter/:_id',function(req,res){
-    var id=req.params._id
-    var offree=req.body;
+app.put('/API/AddOfferToRecruter/:_id', function (req, res) {
+    var id = req.params._id
+    var offree = req.body;
     console.log("test: %j", offree);
-    RecuteurModule.addOfferToRectruter(id,offree,{},function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+    RecuteurModule.addOfferToRectruter(id, offree, {}, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 
 });
 //find Rect by id
-app.get('/API/Get/Recruter/:_id',function (req,res) {
+app.get('/API/Get/Recruter/:_id', function (req, res) {
     //  console.log("no error"+"")
-    var id=req.params._id;
-   RecuteurModule.getRecruterById(id,function (err ,Myuser) {
+    var id = req.params._id;
+    RecuteurModule.getRecruterById(id, function (err, Myuser) {
         if (err) {
 //console.log(err+"")
             throw err;
@@ -547,12 +744,15 @@ app.get('/API/Get/Recruter/:_id',function (req,res) {
     });
 });
 //delete Rect
-app.delete('/API/Delete/Recruter/:_id',function(req,res){
-    var id=req.params._id
-    RecuteurModule.DeleteRecruteur(id,function (err,result) {
-        if(err){console.log("ereur",err);}
-        console.log("this is result"+result)
-        res.json(result);});
+app.delete('/API/Delete/Recruter/:_id', function (req, res) {
+    var id = req.params._id
+    RecuteurModule.DeleteRecruteur(id, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        console.log("this is result" + result)
+        res.json(result);
+    });
 
 });
 
@@ -564,7 +764,7 @@ app.set('view engine', 'jade');
 //app.use(favicon(path.join(__dirname, 'public', 'favicon.ico')));
 app.use(logger('dev'));
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.urlencoded({extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
@@ -572,16 +772,16 @@ app.use('/', index);
 app.use('/users', users);
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
     var err = new Error('Not Found');
-	
+
     err.status = 404;
     next(err);
 });
 
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
     // set locals, only providing error in development
     res.locals.message = err.message;
     res.locals.error = req.app.get('env') === 'development' ? err : {};
