@@ -7,6 +7,7 @@ var mongoose =require('mongoose');
 var CandidatSchema=mongoose.Schema({
 
     nom: String,
+    deviceId:String,
     email: String,
     passwd: String,
     dateNaissance: Date,
@@ -61,7 +62,7 @@ var CandidatSchema=mongoose.Schema({
 });
 
 var candidat=module.exports=mongoose.model('Candidat',CandidatSchema,'Candidat');
-//get user
+//get candidats
 module.exports.getCandidats=function (callback,limet) {
     candidat.find(callback).limit(limet).pretty;
 }
@@ -93,6 +94,16 @@ module.exports.updateCandidat=function(id,Candidat,option,callback){
     }
     candidat.findOneAndUpdate(query,update,option,callback);
 }
+
+//update cand device id
+module.exports.updateCandidatDeviceId=function(id,deviceid,option,callback){
+    var query={_id:id};
+    var update= {
+deviceId:deviceid
+    }
+    candidat.findOneAndUpdate(query,update,option,callback);
+}
+
 //delete Candidat
 module.exports.DeleteCandidat=function(id,callback){
     var query={_id:id};
@@ -113,6 +124,7 @@ module.exports.addOfferToCandidat=function(id,offer,option,callback){
         candidat.findOneAndUpdate({"_id":id},cand,option,callback);
     })
 }
+
 //change candidat offre statu
 module.exports.changeStatus=function(id,offer,option,callback){
     candidat.findById(id,function(err,cand){

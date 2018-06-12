@@ -5,6 +5,7 @@ var mongoose =require('mongoose');
 // User schema
 var RecruterSchema=mongoose.Schema({
     nom: String,
+    deviceId:String,
     email: String,
     passwd: String,
     dateNaissance: Date,
@@ -60,6 +61,16 @@ module.exports.updateRecruteur=function(id,recruter,option,callback){
     }
     Recruter.findOneAndUpdate(query,update,option,callback);
 }
+//update rect device id
+module.exports.updateRectDeviceId=function(id,deviceid,option,callback){
+    var query={_id:id};
+    var update= {
+        deviceId:deviceid
+    }
+    Recruter.findOneAndUpdate(query,update,option,callback);
+}
+
+
 //get Recruter by email
 module.exports.getRectByEmail=function (email,callback) {
     //var query={email:email}

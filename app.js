@@ -359,6 +359,21 @@ app.put('/API/Update/Candidat/:_id', function (req, res) {
     });
 
 });
+//update Candidat
+app.put('/API/Update/CandidatDeviceId/:_id', function (req, res) {
+    var id = req.params._id
+    var test = req.body;
+    console.log("body: %j", test);
+    CandiatModule.updateCandidatDeviceId(id, test, {}, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        //console.log("this is result"+result)
+        res.json(result);
+    });
+
+});
+
 //delete Candidat
 app.delete('/API/Delete/Candidat/:_id', function (req, res) {
     var id = req.params._id
@@ -421,6 +436,79 @@ app.get('/API/Get/CandidatOffers/:_id', function (req, res) {
         _next(0);
     });
 });
+
+//search
+/*
+app.get('/API/search/:search', function (req, res) {
+    //  console.log("no error"+"")
+   var  str=req.params.search
+    var arr=[]
+    CandiatModule.getCandidats(function (err, MyCandidats) {
+        if (err) {
+//console.log(err+"")
+            throw err;
+        }
+
+
+
+        //      console.log("no error"+"")
+        var _next = function (currentIndex) {
+
+           console.log("dddcdcdc"+ MyCandidats[currentIndex].skills["nom_skill"])
+
+            if (currentIndex >= MyCandidats.length) {
+                res.json(arr);
+                console.log("size:",MyCandidats.length)
+                return;
+            }/*
+if((MyCandidats[currentIndex].nom.includes(str))||(experience[0].nom_entreprise.includes(str))||(experience[1].nom_entreprise.includes(str))||(skillls[0].nom_skill.includes(str))||(skillls.includes(str) )){
+    console.log("size:",MyCandidats.length)
+    arr.push(MyCandidats[currentIndex])
+
+            }
+            _next(currentIndex + 1)
+        }
+
+
+            if(MyCandidats[currentIndex].nom!=null){
+                if((MyCandidats[currentIndex].nom.includes(str)))
+                {
+                    arr.push(MyCandidats[currentIndex])
+                }
+            }else if(MyCandidats[currentIndex].experience_professionel!=null){
+                console.log("candidat exp not null")
+                for(var i=0;i<MyCandidats[currentIndex].experience_professionel.length;i++)
+                { console.log("exp size"+MyCandidats[currentIndex].experience_professionel.length)
+
+                    if(MyCandidats[currentIndex].experience_professionel[i]!=null){
+                     console.log("exp not null")
+                       if(MyCandidats[currentIndex].experience_professionel[i].nom_entreprise.includes(str))
+                        arr.push(MyCandidats[currentIndex])
+                    }
+                }
+            }else if(MyCandidats[currentIndex].skills!=null){
+                console.log("condidat skills not null")
+                for(var i=0;i<MyCandidats[currentIndex].skills.length;i++)
+                { console.log("skills size"+MyCandidats[currentIndex].skills.length)
+                    if(MyCandidats[currentIndex].skills[i]!=null){
+                        console.log("skills not null")
+                       if(MyCandidats[currentIndex].skills[i].nom_skill.includes(str))
+                        arr.push(MyCandidats[currentIndex])
+                    }
+
+                }
+            }
+            _next(currentIndex+1)
+        }
+
+        // First call
+        _next(0)
+
+
+    });
+});
+*/
+
 //supprimer candidat specific offer
 app.put('/API/DropCandOffer/:_id', function (req, res) {
     var id = req.params._id
@@ -435,6 +523,8 @@ app.put('/API/DropCandOffer/:_id', function (req, res) {
     });
 
 });
+
+
 //find all Offers
 app.get('/API/Get/AllOffers', function (req, res) {
     //  console.log("no error"+"")
@@ -671,7 +761,7 @@ app.get('/API/Get/RectCandidats/:_id', function (req, res) {
 app.get('/API/Get/RectOffers/:_id', function (req, res) {
     var id = req.params._id;
     var a = [];
-    RecuteurModule.getrectId(id, function (err, result) {
+   /* RecuteurModule.getrectId(id, function (err, result) {
         if (err) {
             console.log("ereur", err);
         }
@@ -687,7 +777,15 @@ app.get('/API/Get/RectOffers/:_id', function (req, res) {
         };
         // First call
         _next(0);
-    });
+    });*/
+
+   OfferModule.getOffersByRectID(id,function(err,result){
+       if (err) {
+           console.log("ereur", err);
+       }else
+           res.json(result)
+
+   })
 });
 //add Recruter
 app.post('/API/ADD/Recruter', function (req, res) {
@@ -712,6 +810,21 @@ app.put('/API/Update/Recruter/:_id', function (req, res) {
             console.log("ereur", err);
         }
         console.log("this is result" + result)
+        res.json(result);
+    });
+
+});
+
+//update rect deviceid
+app.put('/API/Update/RectDeviceId/:_id', function (req, res) {
+    var id = req.params._id
+    var test = req.body;
+    console.log("body: %j", test);
+   RecuteurModule.updateRectDeviceId(id, test, {}, function (err, result) {
+        if (err) {
+            console.log("ereur", err);
+        }
+        //console.log("this is result"+result)
         res.json(result);
     });
 
