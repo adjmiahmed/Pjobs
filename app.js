@@ -11,7 +11,7 @@ var UserModule = require('./Module/User');
 var CandiatModule = require('./Module/Candidat');
 var RecuteurModule = require('./Module/Recruter');
 var OfferModule = require('./Module/offre');
-var NotifModule=require('./Module/Notification')
+var NotifModule = require('./Module/Notification')
 var mongoose = require('mongoose');
 var serviceAccount = require('./pjobsdb-firebase-adminsdk.json');
 var app = express();
@@ -43,16 +43,16 @@ var messanging = function (token, payload, option) {
 
 //verify email
 
-var verifEmail=function(uid){
+var verifEmail = function (uid) {
     admin.auth().getUser(uid)
-        .then(function(userRecord) {
+        .then(function (userRecord) {
             // See the UserRecord reference doc for the contents of userRecord.
             console.log("Successfully fetched user data:", userRecord.toJSON());
-            var user=userRecord.toJSON()
-            console.log("Successfully fetched user email:",  user.email);
+            var user = userRecord.toJSON()
+            console.log("Successfully fetched user email:", user.email);
             return user.email
         })
-        .catch(function(error) {
+        .catch(function (error) {
             console.log("Error fetching user data:", error);
             return null
         });
@@ -65,12 +65,12 @@ var verifEmail=function(uid){
 var Authorized = function (token) {
     admin.auth().verifyIdToken(token)
         .then(function (decodedToken) {
-           var email= verifEmail(decodedToken.uid)
-            console.log("email is ",email)
+            var email = verifEmail(decodedToken.uid)
+            console.log("email is ", email)
             return email
         })
         .catch(function (error) {
-            console.log("email is ",error)
+            console.log("email is ", error)
 
         })
 }
@@ -99,46 +99,44 @@ app.get('/API/', function (req, res) {
 })
 
 
-
-
 /*
-app.get('/API/Token', function (req, res) {
-    var token = req.header("Token")
-    var topic = 'highScores';
-    var message = {
-        data: {
-            score: '850',
-            time: '2:45'
-        },
-        topic: topic
-    };
+ app.get('/API/Token', function (req, res) {
+ var token = req.header("Token")
+ var topic = 'highScores';
+ var message = {
+ data: {
+ score: '850',
+ time: '2:45'
+ },
+ topic: topic
+ };
 
-    admin.messaging().send(message)
-        .then(function(response) {
-        // Response is a message ID string.
-        console.log('Successfully sent message:', response);
-})
-    .catch(function(error){
-        console.log('Error sending message:', error);
-});
-})
-*/
+ admin.messaging().send(message)
+ .then(function(response) {
+ // Response is a message ID string.
+ console.log('Successfully sent message:', response);
+ })
+ .catch(function(error){
+ console.log('Error sending message:', error);
+ });
+ })
+ */
 
 
 app.post('/API/SendNotif', function (req, res) {
     var token = req.header("Token")
-var notif=req.body
+    var notif = req.body
     /*
-    var payload = {
-        "notification": {
-            "title": "Matched",
-            "body": "Some one liked your Profile"
-        }
-    };
-    var option = {
-        "priority": "high",
-        "timeToLive": 60 * 60 * 24
-    };*/
+     var payload = {
+     "notification": {
+     "title": "Matched",
+     "body": "Some one liked your Profile"
+     }
+     };
+     var option = {
+     "priority": "high",
+     "timeToLive": 60 * 60 * 24
+     };*/
     admin.messaging().sendToDevice(notif.deviceID, notif.payload, notif.Option).then(function (result) {
         res.send("notification send")
         console.log("notification send")
@@ -190,8 +188,37 @@ app.get('/API/Get/Notif/:userId', function (req, res) {
         res.json(result);
     });
 });
+//find all requests
+app.get('/API/Get/CandidateRequests/:_id', function (req, res) {
+    var id = req.params._id
+    console.log(id)
+    CandiatModule.getCandidatRequests(id, function (err, cand) {
+        if (err) {
+            throw  err;
+        }
+        res.json(cand.Requests)
+
+    })
+
+})
+
+//add Request to Candidat
+app.post('/API/AddCandRequests', function (req, res) {
+    var RequestRect = req.body;
+    CandiatModule.AddCandidatRequest(RequestRect, function (err, cand) {
+        if (err) throw err
+        res.json(cand)
+    })
 
 
+})
+//delete request from candidate
+app.put('/API/Delete/Request/:_id', function (req, res) {
+    CandiatModule.dropCandidatRequest(req.params._id, req.body, {}, function (err, cand) {
+        if (err) throw err
+        res.json(cand)
+    })
+})
 
 
 //find all user
@@ -439,75 +466,75 @@ app.get('/API/Get/CandidatOffers/:_id', function (req, res) {
 
 //search
 /*
-app.get('/API/search/:search', function (req, res) {
-    //  console.log("no error"+"")
-   var  str=req.params.search
-    var arr=[]
-    CandiatModule.getCandidats(function (err, MyCandidats) {
-        if (err) {
-//console.log(err+"")
-            throw err;
-        }
+ app.get('/API/search/:search', function (req, res) {
+ //  console.log("no error"+"")
+ var  str=req.params.search
+ var arr=[]
+ CandiatModule.getCandidats(function (err, MyCandidats) {
+ if (err) {
+ //console.log(err+"")
+ throw err;
+ }
 
 
 
-        //      console.log("no error"+"")
-        var _next = function (currentIndex) {
+ //      console.log("no error"+"")
+ var _next = function (currentIndex) {
 
-           console.log("dddcdcdc"+ MyCandidats[currentIndex].skills["nom_skill"])
+ console.log("dddcdcdc"+ MyCandidats[currentIndex].skills["nom_skill"])
 
-            if (currentIndex >= MyCandidats.length) {
-                res.json(arr);
-                console.log("size:",MyCandidats.length)
-                return;
-            }/*
-if((MyCandidats[currentIndex].nom.includes(str))||(experience[0].nom_entreprise.includes(str))||(experience[1].nom_entreprise.includes(str))||(skillls[0].nom_skill.includes(str))||(skillls.includes(str) )){
-    console.log("size:",MyCandidats.length)
-    arr.push(MyCandidats[currentIndex])
+ if (currentIndex >= MyCandidats.length) {
+ res.json(arr);
+ console.log("size:",MyCandidats.length)
+ return;
+ }/*
+ if((MyCandidats[currentIndex].nom.includes(str))||(experience[0].nom_entreprise.includes(str))||(experience[1].nom_entreprise.includes(str))||(skillls[0].nom_skill.includes(str))||(skillls.includes(str) )){
+ console.log("size:",MyCandidats.length)
+ arr.push(MyCandidats[currentIndex])
 
-            }
-            _next(currentIndex + 1)
-        }
-
-
-            if(MyCandidats[currentIndex].nom!=null){
-                if((MyCandidats[currentIndex].nom.includes(str)))
-                {
-                    arr.push(MyCandidats[currentIndex])
-                }
-            }else if(MyCandidats[currentIndex].experience_professionel!=null){
-                console.log("candidat exp not null")
-                for(var i=0;i<MyCandidats[currentIndex].experience_professionel.length;i++)
-                { console.log("exp size"+MyCandidats[currentIndex].experience_professionel.length)
-
-                    if(MyCandidats[currentIndex].experience_professionel[i]!=null){
-                     console.log("exp not null")
-                       if(MyCandidats[currentIndex].experience_professionel[i].nom_entreprise.includes(str))
-                        arr.push(MyCandidats[currentIndex])
-                    }
-                }
-            }else if(MyCandidats[currentIndex].skills!=null){
-                console.log("condidat skills not null")
-                for(var i=0;i<MyCandidats[currentIndex].skills.length;i++)
-                { console.log("skills size"+MyCandidats[currentIndex].skills.length)
-                    if(MyCandidats[currentIndex].skills[i]!=null){
-                        console.log("skills not null")
-                       if(MyCandidats[currentIndex].skills[i].nom_skill.includes(str))
-                        arr.push(MyCandidats[currentIndex])
-                    }
-
-                }
-            }
-            _next(currentIndex+1)
-        }
-
-        // First call
-        _next(0)
+ }
+ _next(currentIndex + 1)
+ }
 
 
-    });
-});
-*/
+ if(MyCandidats[currentIndex].nom!=null){
+ if((MyCandidats[currentIndex].nom.includes(str)))
+ {
+ arr.push(MyCandidats[currentIndex])
+ }
+ }else if(MyCandidats[currentIndex].experience_professionel!=null){
+ console.log("candidat exp not null")
+ for(var i=0;i<MyCandidats[currentIndex].experience_professionel.length;i++)
+ { console.log("exp size"+MyCandidats[currentIndex].experience_professionel.length)
+
+ if(MyCandidats[currentIndex].experience_professionel[i]!=null){
+ console.log("exp not null")
+ if(MyCandidats[currentIndex].experience_professionel[i].nom_entreprise.includes(str))
+ arr.push(MyCandidats[currentIndex])
+ }
+ }
+ }else if(MyCandidats[currentIndex].skills!=null){
+ console.log("condidat skills not null")
+ for(var i=0;i<MyCandidats[currentIndex].skills.length;i++)
+ { console.log("skills size"+MyCandidats[currentIndex].skills.length)
+ if(MyCandidats[currentIndex].skills[i]!=null){
+ console.log("skills not null")
+ if(MyCandidats[currentIndex].skills[i].nom_skill.includes(str))
+ arr.push(MyCandidats[currentIndex])
+ }
+
+ }
+ }
+ _next(currentIndex+1)
+ }
+
+ // First call
+ _next(0)
+
+
+ });
+ });
+ */
 
 //supprimer candidat specific offer
 app.put('/API/DropCandOffer/:_id', function (req, res) {
@@ -761,31 +788,31 @@ app.get('/API/Get/RectCandidats/:_id', function (req, res) {
 app.get('/API/Get/RectOffers/:_id', function (req, res) {
     var id = req.params._id;
     var a = [];
-   /* RecuteurModule.getrectId(id, function (err, result) {
+    /* RecuteurModule.getrectId(id, function (err, result) {
+     if (err) {
+     console.log("ereur", err);
+     }
+     var _next = function (currentIndex) {
+     if (currentIndex >= result.offers.length) {
+     res.json(a);
+     return;
+     }
+     OfferModule.findOfferById(result.offers[currentIndex]._id, function (err, offree) {
+     a.push(offree);
+     _next(currentIndex + 1)
+     });
+     };
+     // First call
+     _next(0);
+     });*/
+
+    OfferModule.getOffersByRectID(id, function (err, result) {
         if (err) {
             console.log("ereur", err);
-        }
-        var _next = function (currentIndex) {
-            if (currentIndex >= result.offers.length) {
-                res.json(a);
-                return;
-            }
-            OfferModule.findOfferById(result.offers[currentIndex]._id, function (err, offree) {
-                a.push(offree);
-                _next(currentIndex + 1)
-            });
-        };
-        // First call
-        _next(0);
-    });*/
+        } else
+            res.json(result)
 
-   OfferModule.getOffersByRectID(id,function(err,result){
-       if (err) {
-           console.log("ereur", err);
-       }else
-           res.json(result)
-
-   })
+    })
 });
 //add Recruter
 app.post('/API/ADD/Recruter', function (req, res) {
@@ -820,7 +847,7 @@ app.put('/API/Update/RectDeviceId/:_id', function (req, res) {
     var id = req.params._id
     var test = req.body;
     console.log("body: %j", test);
-   RecuteurModule.updateRectDeviceId(id, test, {}, function (err, result) {
+    RecuteurModule.updateRectDeviceId(id, test, {}, function (err, result) {
         if (err) {
             console.log("ereur", err);
         }

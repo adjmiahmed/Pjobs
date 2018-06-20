@@ -2,16 +2,16 @@
  * Created by ahmed aj on 10/04/2018.
  */
 
-var mongoose =require('mongoose');
+var mongoose = require('mongoose');
 // User schema
-var CandidatSchema=mongoose.Schema({
+var CandidatSchema = mongoose.Schema({
 
     nom: String,
-    deviceId:String,
+    deviceId: String,
     email: String,
     passwd: String,
     dateNaissance: Date,
-    summary:String,
+    summary: String,
     numtel: Number,
     adress: String,
     url_img: String,
@@ -25,7 +25,7 @@ var CandidatSchema=mongoose.Schema({
     projet: [
         {
             nom_project: String,
-            date_debut:Date,
+            date_debut: Date,
             date_fin: Date,
             description: String,
             tache_realiser: String
@@ -54,27 +54,32 @@ var CandidatSchema=mongoose.Schema({
             date_sortie: Date
         }
     ],
-    Myoffers:[{
-        _id:String,
-        statu:String,
-        date_application:Date
+    Myoffers: [{
+        _id: String,
+        statu: String,
+        date_application: Date
+    }],
+    Requests: [{
+        id_rect: String,
+        Name: String,
+        ImgUrl: String
     }]
 });
 
-var candidat=module.exports=mongoose.model('Candidat',CandidatSchema,'Candidat');
+var candidat = module.exports = mongoose.model('Candidat', CandidatSchema, 'Candidat');
 //get candidats
-module.exports.getCandidats=function (callback,limet) {
+module.exports.getCandidats = function (callback, limet) {
     candidat.find(callback).limit(limet).pretty;
 }
 //Add Cadidat
-module.exports.AddCandidat=function(Candidat,callback){
-    candidat.create(Candidat,callback);
+module.exports.AddCandidat = function (Candidat, callback) {
+    candidat.create(Candidat, callback);
 }
 
 //update candidat
-module.exports.updateCandidat=function(id,Candidat,option,callback){
-    var query={_id:id};
-    var update= {
+module.exports.updateCandidat = function (id, Candidat, option, callback) {
+    var query = {_id: id};
+    var update = {
 
         nom: Candidat.nom,
         email: Candidat.email,
@@ -87,80 +92,120 @@ module.exports.updateCandidat=function(id,Candidat,option,callback){
         language: Candidat.language,
         projet: Candidat.projet,
         education: Candidat.education,
-        summary:Candidat.summary,
+        summary: Candidat.summary,
         skills: Candidat.skills,
         experience_professionel: Candidat.experience_professionel,
-       
+
     }
-    candidat.findOneAndUpdate(query,update,option,callback);
+    candidat.findOneAndUpdate(query, update, option, callback);
 }
 
 //update cand device id
-module.exports.updateCandidatDeviceId=function(id,deviceid,option,callback){
-    var query={_id:id};
-    var update= {
-deviceId:deviceid
+module.exports.updateCandidatDeviceId = function (id, deviceid, option, callback) {
+    var query = {_id: id};
+    var update = {
+        deviceId: deviceid
     }
-    candidat.findOneAndUpdate(query,update,option,callback);
+    candidat.findOneAndUpdate(query, update, option, callback);
 }
 
 //delete Candidat
-module.exports.DeleteCandidat=function(id,callback){
-    var query={_id:id};
-   candidat.remove(query,callback);
+module.exports.DeleteCandidat = function (id, callback) {
+    var query = {_id: id};
+    candidat.remove(query, callback);
 }
 
 //get Candidat by email
-module.exports.getCandByemail=function (email,callback) {
+module.exports.getCandByemail = function (email, callback) {
 
-    candidat.findOne({"email":email},callback);
+    candidat.findOne({"email": email}, callback);
 }
 
 //add offer to Candidat
-module.exports.addOfferToCandidat=function(id,offer,option,callback){
-    candidat.findById(id,function(err,cand){
-        if(err)throw err;
+module.exports.addOfferToCandidat = function (id, offer, option, callback) {
+    candidat.findById(id, function (err, cand) {
+        if (err)throw err;
         cand.Myoffers.push(offer);
-        candidat.findOneAndUpdate({"_id":id},cand,option,callback);
+        candidat.findOneAndUpdate({"_id": id}, cand, option, callback);
     })
 }
 
 //change candidat offre statu
-module.exports.changeStatus=function(id,offer,option,callback){
-    candidat.findById(id,function(err,cand){
-        if(err)throw err;
-        Array.prototype.changeObjValueAfterFind = function(key, value) {
-            return this.filter(function(item) {
-                if(item[key] === value){
-                    console.log("this item  statu  is:"+item["statu"])
-                    item["statu"]=offer.statu;}
+module.exports.changeStatus = function (id, offer, option, callback) {
+    candidat.findById(id, function (err, cand) {
+        if (err)throw err;
+        Array.prototype.changeObjValueAfterFind = function (key, value) {
+            return this.filter(function (item) {
+                if (item[key] === value) {
+                    console.log("this item  statu  is:" + item["statu"])
+                    item["statu"] = offer.statu;
+                }
             });
         }
-        cand.Myoffers.changeObjValueAfterFind("_id",offer._id);
-        candidat.findOneAndUpdate({"_id":id},cand,option,callback);
+        cand.Myoffers.changeObjValueAfterFind("_id", offer._id);
+        candidat.findOneAndUpdate({"_id": id}, cand, option, callback);
     })
 }
 //Supprimer offre from canddiat
-module.exports.dropCandidatOffer=function(id,offer,option,callback){
-     var i=0;
-    candidat.findById(id,function(err,cand){
-        if(err)throw err;
-        Array.prototype.deleteObjValueAfterFind = function(key, value) {
-            return this.filter(function(item) {
-             i=i+1;
-                if(item[key] === value){
-                    console.log("this item  index  is:"+i)
-                    Array.prototype.splice(i,1);
-                    }
+module.exports.dropCandidatOffer = function (id, offer, option, callback) {
+    var i = 0;
+    candidat.findById(id, function (err, cand) {
+        if (err)throw err;
+        Array.prototype.deleteObjValueAfterFind = function (key, value) {
+            return this.filter(function (item) {
+                i = i + 1;
+                if (item[key] === value) {
+                    console.log("this item  index  is:" + i)
+                    Array.prototype.splice(i, 1);
+                }
             });
         }
-        cand.Myoffers.deleteObjValueAfterFind("_id",offer._id);
-        candidat.findOneAndUpdate({"_id":id},cand,option,callback);
+        cand.Myoffers.deleteObjValueAfterFind("_id", offer._id);
+        candidat.findOneAndUpdate({"_id": id}, cand, option, callback);
     })
 }
+//add request to candidat
+module.exports.AddCandidatRequest = function (Request, option, callback) {
+    candidat.findById(Request.id_cand, function (err, cand) {
+        if (err)throw err;
+        if (cand != null) {
+            cand.Requests.push(Request)
+            candidat.findOneAndUpdate({"_id": Request.id_cand}, cand, option, callback);
+        }
+    })
+
+}
+//get all requests
+module.exports.getCandidatRequests = function (id, callback) {
+    candidat.findById(id, callback);
+}
+
+//Supprimer request from canddiat
+module.exports.dropCandidatRequest = function (id, Resquest, option, callback) {
+    var i = 0;
+    candidat.findById(id, function (err, cand) {
+        if (err)throw err;
+        var arr = []
+        console.log("req id is:" + Resquest._id)
+        for (var i = 0; i < cand.Requests.length; i++) {
+            console.log("req id is==" + cand.Requests[i]._id)
+            if (cand.Requests[i]._id.toString() !== Resquest._id) {
+                arr.push(cand.Requests[i])
+
+            }
+        }
+        console.log(arr)
+        cand.Requests = arr
+        candidat.findOneAndUpdate({"_id": id}, cand, option, callback);
+
+
+    })
+}
+
+
 //get all My Offers
-module.exports.getCandidatOffers=function (id,callback) {
-            candidat.findById(id,callback);
-    }
+module.exports.getCandidatOffers = function (id, callback) {
+    candidat.findById(id, callback);
+}
 
 
