@@ -106,7 +106,7 @@ module.exports.updateCandidatDeviceId = function (id, deviceid, option, callback
     var update = {
         deviceId: deviceid
     }
-    candidat.findOneAndUpdate(query, update, option, callback);
+    candidat.findOneAndUpdate({_id:id}, {$set:deviceid}, {new:true}, callback)
 }
 
 //delete Candidat

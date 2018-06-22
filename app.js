@@ -395,7 +395,7 @@ app.put('/API/Update/CandidatDeviceId/:_id', function (req, res) {
         if (err) {
             console.log("ereur", err);
         }
-        //console.log("this is result"+result)
+        console.log("this is result"+result)
         res.json(result);
     });
 

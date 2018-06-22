@@ -44,6 +44,7 @@ module.exports.DeleteRecruteur=function(id,callback){
     var query={_id:id};
     Recruter.remove(query,callback);
 }
+
 //update Recruter
 module.exports.updateRecruteur=function(id,recruter,option,callback){
     var query={_id:id};
@@ -63,11 +64,9 @@ module.exports.updateRecruteur=function(id,recruter,option,callback){
 }
 //update rect device id
 module.exports.updateRectDeviceId=function(id,deviceid,option,callback){
-    var query={_id:id};
-    var update= {
-        deviceId:deviceid
-    }
-    Recruter.findOneAndUpdate(query,update,option,callback);
+
+    Recruter.findOneAndUpdate({_id:id}, {$set:deviceid}, {new:true}, callback)
+
 }
 
 
